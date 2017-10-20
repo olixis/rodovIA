@@ -8,6 +8,7 @@ import { DeviceOrientation } from '@ionic-native/device-orientation';
 import { Geolocation } from '@ionic-native/geolocation';
 import { SQLite } from '@ionic-native/sqlite';
 import { SQLitePorter } from '@ionic-native/sqlite-porter';
+import { File } from '@ionic-native/file';
 import { Gyroscope, GyroscopeOrientation, GyroscopeOptions } from '@ionic-native/gyroscope';
 
 
@@ -33,6 +34,7 @@ import { HomePage } from '../pages/home/home';
     SplashScreen,
     Geolocation,
     Gyroscope,
+    File,
     SQLite,
     SQLitePorter,
     DeviceMotion,

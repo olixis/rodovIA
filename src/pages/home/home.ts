@@ -5,8 +5,8 @@ import { DeviceOrientation, DeviceOrientationCompassHeading } from '@ionic-nativ
 import { Gyroscope, GyroscopeOrientation, GyroscopeOptions } from '@ionic-native/gyroscope';
 import { SQLite, SQLiteObject } from '@ionic-native/sqlite';
 import { SQLitePorter } from '@ionic-native/sqlite-porter';
+import { File } from '@ionic-native/file';
 import { Geolocation } from '@ionic-native/geolocation'; 
-// import { Chart } from 'chart.js'
 
 @Component({
   selector: 'page-home',
@@ -14,14 +14,13 @@ import { Geolocation } from '@ionic-native/geolocation';
 })
 export class HomePage {
 
-//   @ViewChild('barCanvas') barCanvas;
-//   barChart: any;
 
 public accelValueX:any;
 public accelValueY:any;
 public accelValueZ:any;
 public lat:any;
 public long:any;
+private fileSystem:File;
 public database:SQLiteObject;
 public acc:any;
 public altitude:any;
@@ -38,20 +37,21 @@ public headingAcc:any;
 private config:any;
 
   constructor(public navCtrl: NavController,private platform: Platform,private deviceMotion: DeviceMotion,private geolocation: Geolocation
-    ,private deviceOrientation: DeviceOrientation,private sqlite: SQLite,private sqlitePorter: SQLitePorter,private gyroscope: Gyroscope) {
-
+    ,private deviceOrientation: DeviceOrientation,private sqlite: SQLite,private sqlitePorter: SQLitePorter,private file: File,private gyroscope: Gyroscope) {
+      this.fileSystem = file;
 
     platform.ready().then(() => {
+      alert(file.externalApplicationStorageDirectory)
         sqlite.create({
         name: 'dados.db',
         location: 'default'
         })
         .then((db: SQLiteObject) => {
             this.database = db;
-            db.executeSql('CREATE TABLE IF NOT EXISTS accel (id INTEGER PRIMARY KEY,zaxisaccel REAL,date TEXT);', {})
+            db.executeSql('CREATE TABLE IF NOT EXISTS accel (id INTEGER PRIMARY KEY,xaxisaccel REAL,yaxisaccel REAL,zaxisaccel REAL,date TEXT);', {})
             .then(() => alert('SQLite Funcionando para tabela accel'))
             .catch(e => alert(e.message));
-            db.executeSql('CREATE TABLE IF NOT EXISTS geoloc (id INTEGER PRIMARY KEY,zaxisaccel REAL,date TEXT);', {})
+            db.executeSql('CREATE TABLE IF NOT EXISTS geoloc (id INTEGER PRIMARY KEY,long REAL,lat REAL,acc REAL,altitude REAL,speed REAL,date TEXT);', {})
             .then(() => alert('SQLite Funcionando para tabela geoloc'))
             .catch(e => alert(e.message));
 
@@ -62,29 +62,26 @@ private config:any;
         this.accelValueX = (acceleration.x/9.80665);
         this.accelValueY = (acceleration.y/9.80665);
         this.accelValueZ = (acceleration.z/9.80665);
-                this.database.executeSql("INSERT INTO accel (zaxisaccel, date) VALUES (?,?);", [this.accelValueZ,acceleration.timestamp])
-                    .then((resultSet) => this.lastInsertionId = resultSet.rows.insertId)
+                this.database.executeSql("INSERT INTO accel (xaxisaccel,yaxisaccel,zaxisaccel, date) VALUES (?,?,?,?);", [this.accelValueX,this.accelValueY,this.accelValueZ,acceleration.timestamp])
+                    .then()
                     .catch(e => alert(e.message));
 
         
-        //   this.config.data.labels.push(new Date());
-        //   this.config.data.datasets[0].data.push({
-        // 			x: new Date(),
-        // 			y: (acceleration.z/9.80665)
-        //   });
         });
         
         
 
-        let geoLocationSub = this.geolocation.watchPosition({enableHighAccuracy: false})
-                                .subscribe(position => {
-                                this.long = position.coords.longitude;
-                                this.lat =  position.coords.latitude;
-                                this.acc = position.coords.accuracy;
-                                this.altitude = String(position.coords.altitude);
-                                this.altitudeAcc = String(position.coords.altitudeAccuracy);
-                                // this.heading = String(position.coords.heading);
-                                this.speed = String(position.coords.speed);
+        let geoLocationSub = this.geolocation.watchPosition({enableHighAccuracy: false}).subscribe(position => {
+        this.long = position.coords.longitude;
+        this.lat =  position.coords.latitude;
+        this.acc = position.coords.accuracy;
+        this.altitude = position.coords.altitude;
+        this.altitudeAcc = position.coords.altitudeAccuracy;
+        // this.heading = String(position.coords.heading);
+        this.speed = position.coords.speed;
+                this.database.executeSql("INSERT INTO geoloc (long,lat,acc,altitude,speed,date) VALUES (?,?,?,?,?,?);", [position.coords.longitude,position.coords.latitude,position.coords.accuracy,position.coords.altitude,position.coords.altitudeAccuracy,position.coords.speed])
+                    .then()
+                    .catch(e => alert(e.message));                                
         }); 
 
         let headingSub = this.deviceOrientation.watchHeading().subscribe(
@@ -103,70 +100,13 @@ private config:any;
 
     
     });
-
-
-
-
-
-      
-
-
-
   }
   
   clicked() {
                 //  this.database.executeSql("SELECT * FROM medicao;", [])
                 // .then((resultSet) => this.lastInsertion = resultSet.rows.item(resultSet.rows.length-1))
                 // .catch(e => alert(e.message));
-                this.sqlitePorter.exportDbToSql(this.database).then(dbSql => alert(dbSql))
+                this.sqlitePorter.exportDbToSql(this.database).then(dbSql => this.fileSystem.createFile(this.fileSystem.externalDataDirectory+'/collected',"db.sqlite",true).then(fileEntry => alert(fileEntry.file.name + " salvo com sucesso!")))
   }
-
-  ionViewDidLoad() {
- 
-//       let config = {
- 
-//             type: 'line',
-//             data: {
-//                 labels: ["init"],
-//                 datasets: [
-//                     {
-//                         label: "Device Acceleration",
-//                         fill: false,
-//                         lineTension: 0,
-//                         backgroundColor: "rgba(75,192,192,0.4)",
-//                         borderColor: "rgba(75,192,192,1)",
-//                         borderCapStyle: 'butt',
-//                         borderDash: [],
-//                         borderDashOffset: 0.0,
-//                         borderJoinStyle: 'miter',
-//                         pointBorderColor: "rgba(75,192,192,1)",
-//                         pointBackgroundColor: "#fff",
-//                         pointBorderWidth: 1,
-//                         drawLine: false,
-//                         pointHoverRadius: 5,
-//                         pointHoverBackgroundColor: "rgba(75,192,192,1)",
-//                         pointHoverBorderColor: "rgba(220,220,220,1)",
-//                         pointHoverBorderWidth: 1,
-//                         pointRadius: 0.1,
-//                         pointHitRadius: 0.1,
-//                         data: [1],
-//                         spanGaps: false,
-//                     }
-//                 ]
-//             }, 
-//             options: {
-//               animation: {
-//                   duration: 0, // general animation time
-//               },
-//               hover: {
-//                   animationDuration: 0, // duration of animations when hovering an item
-//               },
-//               responsiveAnimationDuration: 0, // animation duration after a resize
-//           }
- 
-//         }
-//         this.config = config
-//         this.barChart = new Chart(this.barCanvas.nativeElement, this.config );
-   }
 
 }
