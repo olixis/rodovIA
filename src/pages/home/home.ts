@@ -58,7 +58,7 @@ private config:any;
         })
         .catch(e => alert(e.message));
         
-        let AccelSub = this.deviceMotion.watchAcceleration({frequency:200}).subscribe((acceleration: DeviceMotionAccelerationData) => {
+        let AccelSub = this.deviceMotion.watchAcceleration({frequency:1000}).subscribe((acceleration: DeviceMotionAccelerationData) => {
         this.accelValueX = (acceleration.x/9.80665);
         this.accelValueY = (acceleration.y/9.80665);
         this.accelValueZ = (acceleration.z/9.80665);
@@ -91,7 +91,7 @@ private config:any;
                                 // this.headingAcc = data.headingAccuracy;
                                 }
         );
-        let gyroSub = this.gyroscope.watch({frequency: 100})
+        let gyroSub = this.gyroscope.watch({frequency: 1000})
                       .subscribe((orientation: GyroscopeOrientation) => {
                         this.orientationX = orientation.x
                         this.orientationY = orientation.y
@@ -106,7 +106,7 @@ private config:any;
                 //  this.database.executeSql("SELECT * FROM medicao;", [])
                 // .then((resultSet) => this.lastInsertion = resultSet.rows.item(resultSet.rows.length-1))
                 // .catch(e => alert(e.message));
-                this.sqlitePorter.exportDbToSql(this.database).then(dbSql => this.fileSystem.createFile(this.fileSystem.externalDataDirectory+'/collected',"db.sqlite",true).then(fileEntry => alert(fileEntry.file.name + " salvo com sucesso!")))
+                this.sqlitePorter.exportDbToSql(this.database).then(dbSql => this.fileSystem.createFile(this.fileSystem.externalDataDirectory,"db2.sqlite",true).then(fileEntry => alert(fileEntry.file.name + " salvo com sucesso!")).catch(e => alert(e.message)))
   }
 
 }
