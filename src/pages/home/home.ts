@@ -41,37 +41,43 @@ private config:any;
       this.fileSystem = file;
 
     platform.ready().then(() => {
-      alert(file.externalApplicationStorageDirectory)
-        sqlite.create({
-        name: 'dados.db',
-        location: 'default'
-        })
-        .then((db: SQLiteObject) => {
-            this.database = db;
-            db.executeSql('CREATE TABLE IF NOT EXISTS accel (id INTEGER PRIMARY KEY,xaxisaccel REAL,yaxisaccel REAL,zaxisaccel REAL,date TEXT);', {})
-            .then(() => alert('SQLite Funcionando para tabela accel'))
-            .catch(e => alert(e.message));
-            db.executeSql('CREATE TABLE IF NOT EXISTS geoloc (id INTEGER PRIMARY KEY,long REAL,lat REAL,acc REAL,altitude REAL,speed REAL,date TEXT);', {})
-            .then(() => alert('SQLite Funcionando para tabela geoloc'))
-            .catch(e => alert(e.message));
+      var conn = new WebSocket('ws://104.251.219.125:7171');
+      conn.onopen = function () { 
+        alert("websocket connected!");
+     };
+     conn.onmessage = function (msg) {
+       console.log(msg);
+     }
+      // alert(file.externalApplicationStorageDirectory)
+      //   sqlite.create({
+      //   name: 'dados.db',
+      //   location: 'default'
+      //   })
+      //   .then((db: SQLiteObject) => {
+      //       this.database = db;
+      //       db.executeSql('CREATE TABLE IF NOT EXISTS accel (id INTEGER PRIMARY KEY,xaxisaccel REAL,yaxisaccel REAL,zaxisaccel REAL,date TEXT);', {})
+      //       .then(() => alert('SQLite Funcionando para tabela accel'))
+      //       .catch(e => alert(e.message));
+      //       db.executeSql('CREATE TABLE IF NOT EXISTS geoloc (id INTEGER PRIMARY KEY,long REAL,lat REAL,acc REAL,altitude REAL,speed REAL,date TEXT);', {})
+      //       .then(() => alert('SQLite Funcionando para tabela geoloc'))
+      //       .catch(e => alert(e.message));
 
-        })
-        .catch(e => alert(e.message));
+      //   })
+      //   .catch(e => alert(e.message));
         
         let AccelSub = this.deviceMotion.watchAcceleration({frequency:1000}).subscribe((acceleration: DeviceMotionAccelerationData) => {
         this.accelValueX = (acceleration.x/9.80665);
         this.accelValueY = (acceleration.y/9.80665);
         this.accelValueZ = (acceleration.z/9.80665);
-                this.database.executeSql("INSERT INTO accel (xaxisaccel,yaxisaccel,zaxisaccel, date) VALUES (?,?,?,?);", [this.accelValueX,this.accelValueY,this.accelValueZ,acceleration.timestamp])
-                    .then()
-                    .catch(e => alert(e.message));
-
-        
+                conn.send(JSON.stringify({accelValueX:this.accelValueX,accelValueY:this.accelValueY,accelValueZ:this.accelValueZ,timestamp:acceleration.timestamp,source:"accel"}));
+                // this.database.executeSql("INSERT INTO accel (xaxisaccel,yaxisaccel,zaxisaccel, date) VALUES (?,?,?,?);", [this.accelValueX,this.accelValueY,this.accelValueZ,acceleration.timestamp])
+                //     .then()
+                //     .catch(e => alert(e.message));
         });
         
         
 
-        let geoLocationSub = this.geolocation.watchPosition({enableHighAccuracy: false}).subscribe(position => {
+        let geoLocationSub = this.geolocation.watchPosition({enableHighAccuracy: true}).subscribe(position => {
         this.long = position.coords.longitude;
         this.lat =  position.coords.latitude;
         this.acc = position.coords.accuracy;
@@ -79,9 +85,10 @@ private config:any;
         this.altitudeAcc = position.coords.altitudeAccuracy;
         // this.heading = String(position.coords.heading);
         this.speed = position.coords.speed;
-                this.database.executeSql("INSERT INTO geoloc (long,lat,acc,altitude,speed,date) VALUES (?,?,?,?,?,?);", [position.coords.longitude,position.coords.latitude,position.coords.accuracy,position.coords.altitude,position.coords.altitudeAccuracy,position.coords.speed])
-                    .then()
-                    .catch(e => alert(e.message));                                
+        conn.send(JSON.stringify({longitude:position.coords.longitude,latitude:position.coords.latitude,accuracy:position.coords.accuracy,altitude:position.coords.altitude,altitudeAccuracy:position.coords.altitudeAccuracy,speed:position.coords.speed,timestamp:position.timestamp,source:"geo"}));
+                // this.database.executeSql("INSERT INTO geoloc (long,lat,acc,altitude,speed,date) VALUES (?,?,?,?,?,?);", [position.coords.longitude,position.coords.latitude,position.coords.accuracy,position.coords.altitude,position.coords.altitudeAccuracy,position.coords.speed])
+                //     .then()
+                //     .catch(e => alert(e.message));                                
         }); 
 
         let headingSub = this.deviceOrientation.watchHeading().subscribe(
