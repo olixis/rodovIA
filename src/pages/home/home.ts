@@ -41,7 +41,7 @@ private config:any;
       this.fileSystem = file;
 
     platform.ready().then(() => {
-      var conn = new WebSocket('ws://104.251.219.125:7171');
+      var conn = new WebSocket('ws://');
       conn.onopen = function () { 
         alert("websocket connected!");
      };
