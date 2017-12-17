@@ -25,16 +25,9 @@
   <p> Y: {{ orientationY }} </p>
   <p> Z: {{ orientationZ }} </p>
 
-  <ion-card>
-    <ion-card-header>
-      Última gravação em banco
-    </ion-card-header>
-    <ion-card-content>
-      <p> Última gravação em banco:</p>
-      <p> AceleraçãoZ: {{ lastInsertion.zaxisaccel }} , Horário:{{ lastInsertion.date }} </p>
-    </ion-card-content>
-  </ion-card> 
 
-   <button ion-button round (click)="clicked()">Exportar Banco de dados</button>  
+
+   <button ion-button round (click)="connectWebsocket()">Transmitir dados</button> 
+   <button ion-button round (click)="closeWebsocket()">Encerrar Transmissão</button> 
 
 </ion-content>

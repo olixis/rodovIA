@@ -20,7 +20,7 @@ wss.on('connection', function connection(ws) {
             console.log("Invalid JSON");
             data = {};
         }
-        switch (data.source) {
+        switch (data.ptype) {
             case "accel":
             console.log("dados accel: ",data)
             MongoClient.connect(url, function(err, db) {
@@ -45,10 +45,8 @@ wss.on('connection', function connection(ws) {
             break;
         }
 
-        ws.send('ack',message.source);
 
     });
 
     console.log('new client connected!');
-    ws.send('connected!');
 });

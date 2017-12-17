@@ -6,7 +6,9 @@ import { Gyroscope, GyroscopeOrientation, GyroscopeOptions } from '@ionic-native
 import { SQLite, SQLiteObject } from '@ionic-native/sqlite';
 import { SQLitePorter } from '@ionic-native/sqlite-porter';
 import { File } from '@ionic-native/file';
-import { Geolocation } from '@ionic-native/geolocation'; 
+import { Geolocation } from '@ionic-native/geolocation';
+import { BackgroundMode } from '@ionic-native/background-mode';
+
 
 @Component({
   selector: 'page-home',
@@ -35,19 +37,15 @@ public speed:any;
 public trueHeading:any;
 public headingAcc:any;
 private config:any;
+private conn:WebSocket = null;
 
   constructor(public navCtrl: NavController,private platform: Platform,private deviceMotion: DeviceMotion,private geolocation: Geolocation
-    ,private deviceOrientation: DeviceOrientation,private sqlite: SQLite,private sqlitePorter: SQLitePorter,private file: File,private gyroscope: Gyroscope) {
+    ,private deviceOrientation: DeviceOrientation,private sqlite: SQLite,private sqlitePorter: SQLitePorter,private file: File,
+    private gyroscope: Gyroscope,private backgroundMode: BackgroundMode) {
       this.fileSystem = file;
 
     platform.ready().then(() => {
-      var conn = new WebSocket('ws://104.131.185.97:7171');
-      conn.onopen = function () { 
-        alert("websocket connected!");
-     };
-     conn.onmessage = function (msg) {
-       console.log(msg);
-     }
+      this.backgroundMode.enable();
       // alert(file.externalApplicationStorageDirectory)
       //   sqlite.create({
       //   name: 'dados.db',
@@ -69,8 +67,11 @@ private config:any;
         this.accelValueX = (acceleration.x/9.80665);
         this.accelValueY = (acceleration.y/9.80665);
         this.accelValueZ = (acceleration.z/9.80665);
-                conn.send(JSON.stringify({accelValueX:this.accelValueX,accelValueY:this.accelValueY,accelValueZ:this.accelValueZ,timestamp:acceleration.timestamp,source:"accel"}));
-                // this.database.executeSql("INSERT INTO accel (xaxisaccel,yaxisaccel,zaxisaccel, date) VALUES (?,?,?,?);", [this.accelValueX,this.accelValueY,this.accelValueZ,acceleration.timestamp])
+        if(this.conn && this.conn.readyState === this.conn.OPEN){
+          this.conn.send(JSON.stringify({accelValueX:this.accelValueX,accelValueY:this.accelValueY,accelValueZ:this.accelValueZ,timestamp:acceleration.timestamp,ptype:"accel"}));
+        }      
+               
+              // this.database.executeSql("INSERT INTO accel (xaxisaccel,yaxisaccel,zaxisaccel, date) VALUES (?,?,?,?);", [this.accelValueX,this.accelValueY,this.accelValueZ,acceleration.timestamp])
                 //     .then()
                 //     .catch(e => alert(e.message));
         });
@@ -85,8 +86,10 @@ private config:any;
         this.altitudeAcc = position.coords.altitudeAccuracy;
         // this.heading = String(position.coords.heading);
         this.speed = position.coords.speed;
-        conn.send(JSON.stringify({longitude:position.coords.longitude,latitude:position.coords.latitude,accuracy:position.coords.accuracy,altitude:position.coords.altitude,altitudeAccuracy:position.coords.altitudeAccuracy,speed:position.coords.speed,timestamp:position.timestamp,source:"geo"}));
-                // this.database.executeSql("INSERT INTO geoloc (long,lat,acc,altitude,speed,date) VALUES (?,?,?,?,?,?);", [position.coords.longitude,position.coords.latitude,position.coords.accuracy,position.coords.altitude,position.coords.altitudeAccuracy,position.coords.speed])
+        if(this.conn && this.conn.readyState === this.conn.OPEN){
+          this.conn.send(JSON.stringify({longitude:position.coords.longitude,latitude:position.coords.latitude,accuracy:position.coords.accuracy,altitude:position.coords.altitude,altitudeAccuracy:position.coords.altitudeAccuracy,speed:position.coords.speed,timestamp:position.timestamp,ptype:"geo"}));
+        }
+        // this.database.executeSql("INSERT INTO geoloc (long,lat,acc,altitude,speed,date) VALUES (?,?,?,?,?,?);", [position.coords.longitude,position.coords.latitude,position.coords.accuracy,position.coords.altitude,position.coords.altitudeAccuracy,position.coords.speed])
                 //     .then()
                 //     .catch(e => alert(e.message));                                
         }); 
@@ -109,11 +112,30 @@ private config:any;
     });
   }
   
-  clicked() {
-                //  this.database.executeSql("SELECT * FROM medicao;", [])
-                // .then((resultSet) => this.lastInsertion = resultSet.rows.item(resultSet.rows.length-1))
-                // .catch(e => alert(e.message));
-                this.sqlitePorter.exportDbToSql(this.database).then(dbSql => this.fileSystem.createFile(this.fileSystem.externalDataDirectory,"db2.sqlite",true).then(fileEntry => alert(fileEntry.file.name + " salvo com sucesso!")).catch(e => alert(e.message)))
+  connectWebsocket() {
+    this.platform.ready().then(() => {
+      this.conn = new WebSocket('ws://104.131.185.97:7171');
+      this.conn.onopen = function () { 
+        alert("Conectado com o servidor. Enviando dados!");
+     };
+     this.conn.onmessage = function (msg) {
+       switch(msg.data.ptype){
+        case "first":
+        break;
+        case "testioni":
+        break;
+       }
+     }
+     this.conn.onclose = function () {
+       alert("Conexão Encerrada.")
+     }
+    })
+  }
+  closeWebsocket(){
+    if(this.conn.readyState === this.conn.OPEN){
+      this.conn.close();
+      this.conn = null;      
+    }
   }
 
 }
