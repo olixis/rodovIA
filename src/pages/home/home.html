@@ -24,7 +24,10 @@
   <p> X: {{ orientationX }} </p>
   <p> Y: {{ orientationY }} </p>
   <p> Z: {{ orientationZ }} </p>
-
+  <p> Run ID atual: {{ runID }} </p>
+  <div  *ngFor="let sessionRunID of sessionRunIDS">
+    <p>{{ sessionRunID }}</p>
+ </div>
 
 
    <button ion-button round (click)="connectWebsocket()">Transmitir dados</button> 

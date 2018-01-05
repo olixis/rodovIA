@@ -5,7 +5,7 @@ var port = 7171,
     wss = new WebSocketServer({
         port: port
     });
-
+var randomstring = require("randomstring");
 
 console.log('listening on port: ' + port);
 
@@ -42,6 +42,9 @@ wss.on('connection', function connection(ws) {
                     db.close()
                 })
             })
+            break;
+            case "rrunID":
+            ws.send(JSON.stringify({ptype:"rrunID",runID:randomstring.generate(10)}))
             break;
         }
 

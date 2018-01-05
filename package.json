@@ -40,7 +40,6 @@
         "cordova-plugin-device": "^1.1.4",
         "cordova-plugin-device-motion": "^1.2.5",
         "cordova-plugin-device-orientation": "^1.0.7",
-        "cordova-plugin-file": "^4.3.3",
         "cordova-plugin-geolocation": "^2.4.3",
         "cordova-plugin-gyroscope": "^0.1.4",
         "cordova-plugin-splashscreen": "^4.0.3",
@@ -75,7 +74,6 @@
             "cordova-sqlite-storage": {},
             "cordova-plugin-gyroscope": {},
             "uk.co.workingedge.cordova.plugin.sqliteporter": {},
-            "cordova-plugin-file": {},
             "cordova-plugin-background-mode": {}
         },
         "platforms": [
