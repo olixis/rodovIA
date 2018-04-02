@@ -86,7 +86,7 @@ private conn:WebSocket = null;
     let that = this;
     this.platform.ready().then(() => {
       if(!this.conn){
-        this.conn = new WebSocket('ws://104.131.185.97:7171');
+        this.conn = new WebSocket('ws://159.65.74.104:7171');
         this.conn.onopen = function () { 
           alert("Conectado com o servidor. Enviando dados!");
           this.send(JSON.stringify({ptype:"rrunID"}))        
