@@ -5,6 +5,8 @@ import { DeviceOrientation, DeviceOrientationCompassHeading } from '@ionic-nativ
 import { Gyroscope, GyroscopeOrientation, GyroscopeOptions } from '@ionic-native/gyroscope';
 import { Geolocation } from '@ionic-native/geolocation';
 import { BackgroundMode } from '@ionic-native/background-mode';
+import { Clipboard } from '@ionic-native/clipboard';
+import { ToastController } from 'ionic-angular';
 
 
 @Component({
@@ -37,7 +39,7 @@ private config:any;
 private conn:WebSocket = null;
 
   constructor(public navCtrl: NavController,private platform: Platform,private deviceMotion: DeviceMotion,private geolocation: Geolocation
-    ,private deviceOrientation: DeviceOrientation,private gyroscope: Gyroscope,private backgroundMode: BackgroundMode) {
+    ,private deviceOrientation: DeviceOrientation,private gyroscope: Gyroscope,private backgroundMode: BackgroundMode,private clipboard: Clipboard,private toastCtrl: ToastController) {
 
     platform.ready().then(() => {
       this.backgroundMode.enable();
@@ -81,12 +83,27 @@ private conn:WebSocket = null;
     
     });
   }
+
+  createGenericToast(message : string ,duration,position : string){
+    return this.toastCtrl.create({
+      message: message,
+      duration: duration,
+      position: position
+    });
+  }
+
+  copySessionRunIds(){
+    this.clipboard.copy(this.sessionRunIDS.toString()).then(
+      () => this.createGenericToast("Ids copiados para a área de transferencia!",3000,"bottom")
+      .present()
+    );
+  }
   
   connectWebsocket() {
     let that = this;
     this.platform.ready().then(() => {
       if(!this.conn){
-        this.conn = new WebSocket('ws://104.131.185.97:7171');
+        this.conn = new WebSocket('ws://159.65.74.104:7171');
         this.conn.onopen = function () { 
           alert("Conectado com o servidor. Enviando dados!");
           this.send(JSON.stringify({ptype:"rrunID"}))        
@@ -105,8 +122,6 @@ private conn:WebSocket = null;
             that.runID = data.runID;
             that.sessionRunIDS.push(that.runID);
             alert("Seu id de corrida é: " + data.runID);
-            break;
-            case "test":
             break;
           }
         }

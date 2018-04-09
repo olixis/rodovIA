@@ -10,6 +10,7 @@ import { SQLite } from '@ionic-native/sqlite';
 import { SQLitePorter } from '@ionic-native/sqlite-porter';
 import { File } from '@ionic-native/file';
 import { Gyroscope, GyroscopeOrientation, GyroscopeOptions } from '@ionic-native/gyroscope';
+import { Clipboard } from '@ionic-native/clipboard';
 import { BackgroundMode } from '@ionic-native/background-mode';
 
 import { MyApp } from './app.component';
@@ -35,6 +36,7 @@ import { HomePage } from '../pages/home/home';
     BackgroundMode,
     Geolocation,
     Gyroscope,
+    Clipboard,
     File,
     SQLite,
     SQLitePorter,
