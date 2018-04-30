@@ -3,9 +3,11 @@ import { NavController, Platform } from 'ionic-angular';
 import { DeviceMotion, DeviceMotionAccelerationData } from '@ionic-native/device-motion';
 import { DeviceOrientation, DeviceOrientationCompassHeading } from '@ionic-native/device-orientation';
 import { Gyroscope, GyroscopeOrientation, GyroscopeOptions } from '@ionic-native/gyroscope';
+import { SQLite, SQLiteObject } from '@ionic-native/sqlite';
 import { Geolocation } from '@ionic-native/geolocation';
 import { BackgroundMode } from '@ionic-native/background-mode';
 import { Clipboard } from '@ionic-native/clipboard';
+import { File } from '@ionic-native/file'; 
 import { ToastController } from 'ionic-angular';
 
 
@@ -22,6 +24,7 @@ public accelValueZ:any;
 public lat:any;
 public long:any;
 public acc:any;
+private database:SQLiteObject;
 public altitude:any;
 public altitudeAcc:any;
 public heading:any;
@@ -39,19 +42,40 @@ private config:any;
 private conn:WebSocket = null;
 
   constructor(public navCtrl: NavController,private platform: Platform,private deviceMotion: DeviceMotion,private geolocation: Geolocation
-    ,private deviceOrientation: DeviceOrientation,private gyroscope: Gyroscope,private backgroundMode: BackgroundMode,private clipboard: Clipboard,private toastCtrl: ToastController) {
+    ,private deviceOrientation: DeviceOrientation,private file: File,private sqlite: SQLite,private gyroscope: Gyroscope,private backgroundMode: BackgroundMode,private clipboard: Clipboard,private toastCtrl: ToastController) {
 
     platform.ready().then(() => {
       this.backgroundMode.enable();
+      alert(file.externalApplicationStorageDirectory)
+      sqlite.create({
+        name: 'dados.db',
+        location: 'default'
+        })
+        .then((db: SQLiteObject) => {
+            this.database = db;
+            db.executeSql('CREATE TABLE IF NOT EXISTS accel (id INTEGER PRIMARY KEY AUTOINCREMENT,xaxisaccel DOUBLE,yaxisaccel DOUBLE,zaxisaccel DOUBLE,date DOUBLE);', {})
+            .then(() => alert('SQLite Funcionando para tabela accel'))
+            .catch(e => alert(e.message));
+            db.executeSql('CREATE TABLE IF NOT EXISTS geoloc (id INTEGER PRIMARY KEY AUTOINCREMENT,long DOUBLE,lat DOUBLE,acc DOUBLE,altitude DOUBLE,speed DOUBLE,date DOUBLE);', {})
+            .then(() => alert('SQLite Funcionando para tabela geoloc'))
+            .catch(e => alert(e.message));
+
+        })
+        .catch(e => alert(e.message));
 
         
         let AccelSub = this.deviceMotion.watchAcceleration({frequency:1000}).subscribe((acceleration: DeviceMotionAccelerationData) => {
         this.accelValueX = (acceleration.x/9.80665);
         this.accelValueY = (acceleration.y/9.80665);
         this.accelValueZ = (acceleration.z/9.80665);
-        if(this.runID && this.conn && this.conn.readyState === this.conn.OPEN){
-          this.conn.send(JSON.stringify({accelValueX:this.accelValueX,accelValueY:this.accelValueY,accelValueZ:this.accelValueZ,timestamp:acceleration.timestamp,ptype:"accel",runID:this.runID}));
-        }      
+        // if(this.runID && this.conn && this.conn.readyState === this.conn.OPEN){
+          // this.conn.send(JSON.stringify({accelValueX:this.accelValueX,accelValueY:this.accelValueY,accelValueZ:this.accelValueZ,timestamp:acceleration.timestamp,ptype:"accel",runID:this.runID}));
+        // }
+
+        
+         this.database.executeSql("INSERT INTO accel (xaxisaccel,yaxisaccel,zaxisaccel, date) VALUES (?,?,?,?);", [this.accelValueX,this.accelValueY,this.accelValueZ,acceleration.timestamp])
+                     .then()
+                     .catch(e => alert(e.message));      
         });
         
         
@@ -63,9 +87,12 @@ private conn:WebSocket = null;
         this.altitude = position.coords.altitude;
         this.altitudeAcc = position.coords.altitudeAccuracy;
         this.speed = position.coords.speed;
-        if(this.runID && this.conn && this.conn.readyState === this.conn.OPEN){
-          this.conn.send(JSON.stringify({longitude:position.coords.longitude,latitude:position.coords.latitude,accuracy:position.coords.accuracy,altitude:position.coords.altitude,altitudeAccuracy:position.coords.altitudeAccuracy,speed:position.coords.speed,timestamp:position.timestamp,ptype:"geo",runID:this.runID}));
-        }                           
+        // if(this.runID && this.conn && this.conn.readyState === this.conn.OPEN){
+          // this.conn.send(JSON.stringify({longitude:position.coords.longitude,latitude:position.coords.latitude,accuracy:position.coords.accuracy,altitude:position.coords.altitude,altitudeAccuracy:position.coords.altitudeAccuracy,speed:position.coords.speed,timestamp:position.timestamp,ptype:"geo",runID:this.runID}));
+        // }
+         this.database.executeSql("INSERT INTO geoloc (long,lat,acc,altitude,speed,date) VALUES (?,?,?,?,?,?);", [position.coords.longitude,position.coords.latitude,position.coords.accuracy,position.coords.altitude,position.coords.altitudeAccuracy,position.coords.speed])
+         .then()
+         .catch(e => alert(e.message));  
         }); 
 
         let headingSub = this.deviceOrientation.watchHeading().subscribe(
@@ -142,6 +169,12 @@ private conn:WebSocket = null;
       this.conn = null;  
       this.runID = null;    
     }
+  }
+  selectGeral(){
+    this.database.executeSql("SELECT * from accel;",{})
+    .then(resultado => alert(resultado.rows.item(0).xaxisaccel))
+    .catch(e => alert(e.message));      
+
   }
 
 }
