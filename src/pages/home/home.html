@@ -28,8 +28,9 @@
   <div  *ngFor="let sessionRunID of sessionRunIDS">
     <p>{{ sessionRunID }}</p>
  </div>
+ <p> Capturando: {{ capturaToggle }} </p>
 
-
+   <button ion-button round (click)="toggleCaptura()">Iniciar/Encerrar Captura</button>   
    <button ion-button round (click)="connectWebsocket()">Conectar ao Servidor</button> 
    <button ion-button round (click)="closeWebsocket()">Desconectar do Servidor</button> 
    <button ion-button round (click)="subirDados()">Subir Dados</button>
