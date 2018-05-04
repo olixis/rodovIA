@@ -53,10 +53,10 @@ private conn:WebSocket = null;
         })
         .then((db: SQLiteObject) => {
             this.database = db;
-            db.executeSql('CREATE TABLE IF NOT EXISTS accel (id INTEGER PRIMARY KEY AUTOINCREMENT,xaxisaccel DOUBLE,yaxisaccel DOUBLE,zaxisaccel DOUBLE,date DOUBLE);', {})
+            db.executeSql('CREATE TABLE IF NOT EXISTS accel (id INTEGER PRIMARY KEY AUTOINCREMENT,accelValueX DOUBLE,accelValueY DOUBLE,accelValueZ DOUBLE,timestamp DOUBLE);', {})
             .then(() => alert('SQLite Funcionando para tabela accel'))
             .catch(e => alert(e.message));
-            db.executeSql('CREATE TABLE IF NOT EXISTS geoloc (id INTEGER PRIMARY KEY AUTOINCREMENT,long DOUBLE,lat DOUBLE,acc DOUBLE,altitude DOUBLE,speed DOUBLE,date DOUBLE);', {})
+            db.executeSql('CREATE TABLE IF NOT EXISTS geoloc (id INTEGER PRIMARY KEY AUTOINCREMENT,longitude DOUBLE,latitude DOUBLE,accuracy DOUBLE,altitude DOUBLE,speed DOUBLE,timestamp DOUBLE);', {})
             .then(() => alert('SQLite Funcionando para tabela geoloc'))
             .catch(e => alert(e.message));
 
@@ -73,7 +73,7 @@ private conn:WebSocket = null;
         // }
 
         
-         this.database.executeSql("INSERT INTO accel (xaxisaccel,yaxisaccel,zaxisaccel, date) VALUES (?,?,?,?);", [this.accelValueX,this.accelValueY,this.accelValueZ,acceleration.timestamp])
+         this.database.executeSql("INSERT INTO accel (accelValueX,accelValueY,accelValueZ, timestamp) VALUES (?,?,?,?);", [this.accelValueX,this.accelValueY,this.accelValueZ,acceleration.timestamp])
                      .then()
                      .catch(e => alert(e.message));      
         });
@@ -90,7 +90,9 @@ private conn:WebSocket = null;
         // if(this.runID && this.conn && this.conn.readyState === this.conn.OPEN){
           // this.conn.send(JSON.stringify({longitude:position.coords.longitude,latitude:position.coords.latitude,accuracy:position.coords.accuracy,altitude:position.coords.altitude,altitudeAccuracy:position.coords.altitudeAccuracy,speed:position.coords.speed,timestamp:position.timestamp,ptype:"geo",runID:this.runID}));
         // }
-         this.database.executeSql("INSERT INTO geoloc (long,lat,acc,altitude,speed,date) VALUES (?,?,?,?,?,?);", [position.coords.longitude,position.coords.latitude,position.coords.accuracy,position.coords.altitude,position.coords.altitudeAccuracy,position.coords.speed])
+        //TODO-------------------------------
+        // criar botao de captura
+         this.database.executeSql("INSERT INTO geoloc (longitude,latitude,accuracy,altitude,speed,timestamp) VALUES (?,?,?,?,?,?);", [position.coords.longitude,position.coords.latitude,position.coords.accuracy,position.coords.altitude,position.coords.altitudeAccuracy,position.coords.speed])
          .then()
          .catch(e => alert(e.message));  
         }); 
@@ -132,8 +134,8 @@ private conn:WebSocket = null;
       if(!this.conn){
         this.conn = new WebSocket('ws://159.65.74.104:7171');
         this.conn.onopen = function () { 
-          alert("Conectado com o servidor. Enviando dados!");
-          this.send(JSON.stringify({ptype:"rrunID"}))        
+          alert("Conectado com o servidor.");
+          //this.send(JSON.stringify({ptype:"rrunID"}))        
         };
         this.conn.onmessage = function (msg) {
           var data;
@@ -170,11 +172,32 @@ private conn:WebSocket = null;
       this.runID = null;    
     }
   }
-  selectGeral(){
+  subirDados(){
     this.database.executeSql("SELECT * from accel;",{})
-    .then(resultado => alert(resultado.rows.item(0).xaxisaccel))
-    .catch(e => alert(e.message));      
+    .then(resultado => {
+      for (let index = 0; index < resultado.rows.length; index++) {
+        resultado.rows.item(index).ptype = "accel"
+        this.conn.send(JSON.stringify(resultado.rows.item(index)))
+      }
+    })
+    .catch(e => alert(e.message));
 
+    this.database.executeSql("SELECT * from geoloc;",{})
+    .then(resultado => {
+      for (let index = 0; index < resultado.rows.length; index++) {
+        resultado.rows.item(index).ptype = "geo"
+        this.conn.send(JSON.stringify(resultado.rows.item(index)))
+      }
+      alert("Caso a conexão não tenha sido encerrada, dados enviados.")
+    })
+    .catch(e => alert(e.message));
+
+  }
+  apagarBaseLocal(){
+      this.database.executeSql("delete from accel;",{})
+      .catch(e => alert(e.message));
+      this.database.executeSql("delete from geoloc;",{})
+      .catch(e => alert(e.message));
   }
 
 }
